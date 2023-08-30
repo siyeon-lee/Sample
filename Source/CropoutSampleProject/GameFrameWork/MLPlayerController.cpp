@@ -2,12 +2,14 @@
 
 
 #include "MLPlayerController.h"
+#include <CropoutSampleProject/CropoutSampleProject.h>
 
 
 // > Protected ------
 void AMLPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	ML_LOG(Log, TEXT("Game Start"));
 }
 
 void AMLPlayerController::SetupInputComponent()
