@@ -2,48 +2,76 @@
 
 
 #include "MLPlayerController.h"
-#include <CropoutSampleProject/CropoutSampleProject.h>
+#include "CropoutSampleProject.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
+
+#include "InputAction.h"
+#include "InputMappingContext.h"
 
 
 // > Protected ------
+
+AMLPlayerController::AMLPlayerController(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	OverridePlayerInputClass = UEnhancedInputComponent::StaticClass();
+}
+
 void AMLPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	ML_LOG(Log, TEXT("Game Start"));
+
+	if (const ULocalPlayer* LP = GetLocalPlayer())
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+		{
+			Subsystem->AddMappingContext(InputMapping, 0);
+		}
+	}
+}
+
+void AMLPlayerController::OnPossess(APawn* aPawn)
+{
+	Super::OnPossess(aPawn);
 }
 
 void AMLPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-		// Set up gameplay key bindings
-	InputComponent->BindAction("Shot", IE_Pressed, this, &AMLPlayerController::StartToShot);
-	InputComponent->BindAction("Shot", IE_Released, this, &AMLPlayerController::StopToShot);
 
-	InputComponent->BindAxis("MoveForward", this, &AMLPlayerController::MoveForward);
-	InputComponent->BindAxis("MoveRight", this, &AMLPlayerController::MoveRight);
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+	{
+		for (const FActionInfo& Info : ActionInfos)
+		{
+			switch (Info.InputType)
+			{
 
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	InputComponent->BindAxis("Turn", this, &AMLPlayerController::AddYawInput);
-	InputComponent->BindAxis("TurnRate", this, &AMLPlayerController::TurnAtRate);
-	InputComponent->BindAxis("LookUp", this, &AMLPlayerController::AddYawInput);
-	InputComponent->BindAxis("LookUpRate", this, &AMLPlayerController::LookUpAtRate);
-
-	// handle touch devices
-	InputComponent->BindTouch(IE_Pressed, this, &AMLPlayerController::TouchStarted);
-	InputComponent->BindTouch(IE_Released, this, &AMLPlayerController::TouchStopped);
-
+			case EInputType::MoveRight:
+			{
+				EnhancedInputComponent->BindAction(Info.InputAction, ETriggerEvent::Triggered, this, &AMLPlayerController::MoveRight);
+			}
+			break;
+			
+			case EInputType::Zoom:
+			{
+				EnhancedInputComponent->BindAction(Info.InputAction, ETriggerEvent::Triggered, this, &AMLPlayerController::Zoom);
+			}
+			break;
+			case EInputType::Max:
+				break;
+			default:
+				break;
+			}
+		}
+	}
 }
+
+
 bool AMLPlayerController::DestroyNetworkActorHandled()
 {
-	//데디케이트 상황에서 다른 클라이언트가 넷컬링 된 상태에서 게임을 종료했을 시, 플로터 해제를 위해 넣은 코드
-	//AMLGameCharacter* CurrentPawn = GetPawn<AMLGameCharacter>();
-	//if (CurrentPawn != nullptr && CurrentPawn->IsValidLowLevel() == true)
-	//{
-	//	CurrentPawn->ReleaseCharacter();
-	//}
+
 	return Super::DestroyNetworkActorHandled();
 }
 // < Protected -----
@@ -73,8 +101,9 @@ void AMLPlayerController::MoveForward(float Value)
 	CurrentPawn->AddMovementInput(Direction, Value);
 }
 
-void AMLPlayerController::MoveRight(float Value)
+void AMLPlayerController::MoveRight(const FInputActionInstance& Instance)
 {
+	float Value = Instance.GetValue().Get<float>();
 	if (Value == 0.0f)
 	{
 		return;
@@ -93,6 +122,17 @@ void AMLPlayerController::MoveRight(float Value)
 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 	// add movement in that direction
 	CurrentPawn->AddMovementInput(Direction, Value);
+}
+
+
+void AMLPlayerController::Zoom(const FInputActionInstance& Instance)
+{
+	float Value = Instance.GetValue().Get<float>();
+	if (Value == 0.0f)
+	{
+		return;
+	}
+
 }
 
 void AMLPlayerController::TurnAtRate(float Rate)
@@ -115,6 +155,7 @@ void AMLPlayerController::LookUpAtRate(float Rate)
 
 void AMLPlayerController::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
+
 
 }
 
