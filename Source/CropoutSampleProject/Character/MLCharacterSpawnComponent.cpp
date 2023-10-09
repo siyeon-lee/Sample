@@ -4,6 +4,8 @@
 #include "Character/MLCharacterSpawnComponent.h"
 #include "MLCharacterSpawnComponent.h"
 #include "MLCharacter.h"
+#include "GameFrameWork/MLCharacterPoolManager.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values for this component's properties
 UMLCharacterSpawnComponent::UMLCharacterSpawnComponent()
@@ -11,7 +13,7 @@ UMLCharacterSpawnComponent::UMLCharacterSpawnComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
+	TeamType = EMLTeamType::Player;
 	// ...
 }
 
@@ -56,17 +58,28 @@ void UMLCharacterSpawnComponent::SpawnCharacter()
 		{
 			continue;
 		}
-		GetWorld()->SpawnActor<AMLCharacter>(SpawnCharacterList[SpawnCharacterIndex], GetSpawnTransform());
+		if (UMLCharacterPoolManager* PoolManager = UMLCharacterPoolManager::GetCharacterPoolSystem(this))
+		{
+			PoolManager->SpawnCharacter<AMLCharacter>(TeamType, SpawnCharacterList[SpawnCharacterIndex], GetSpawnTransform());
+		}
 	}
 }
 
 FTransform UMLCharacterSpawnComponent::GetSpawnTransform()
 {
+	APlayerController* PlayerContorller = UGameplayStatics::GetPlayerController(this, 0);
+	if (PlayerContorller == nullptr)
+	{
+		return FTransform();
+	}
 	FVector BaseVector  = GetOwner()->GetActorLocation();
 	FVector RandomUnitVector = FMath::VRand();
 	float RandomDistance = FMath::FRandRange(SpawnMinRadius, SpawnMaxRadius);
 	FVector  ResultVector = BaseVector + RandomDistance * RandomUnitVector;
-	FRotator ResultRotator = GetOwner()->GetActorRotation();
+	FRotator ResultRotator = PlayerContorller->GetControlRotation();//GetOwner()->GetActorRotation();
+	ResultRotator.Roll = 0.f;
+	ResultRotator.Pitch = 0.f;
+	//ResultRotator.Yaw -= 90.f;
 	return FTransform(ResultRotator, ResultVector);
 }
 

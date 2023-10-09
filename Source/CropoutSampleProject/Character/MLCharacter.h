@@ -4,11 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "MLBattleDefine.h"
 #include "MLCharacter.generated.h"
 
 class USkeletalMeshComponent;
 class USpringArmComponent;
 class UCameraComponent;
+class UMLStatusComponent;
+enum class EMLTeamType : uint8;
 
 UCLASS()
 class CROPOUTSAMPLEPROJECT_API AMLCharacter : public ACharacter
@@ -18,7 +21,11 @@ class CROPOUTSAMPLEPROJECT_API AMLCharacter : public ACharacter
 public:
 	// Sets default values for this Character's properties
 	AMLCharacter();
-
+	virtual void InitCharacter(FGuid InUID, EMLTeamType InTeamType);
+	virtual void BeAttacked(int32 InAttackValue);
+public:
+	EMLTeamType GetTeamType() const;
+	FGuid GetUID() const { return GUID; }
 protected:
 	// Called when the game starts or when sCharactered
 	virtual void PostInitializeComponents() override;
@@ -27,19 +34,32 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	virtual bool MoveToLovcation(const FVector& InDestination);
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+private:
+	UFUNCTION()
+	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 public:
-#pragma region THIRDPERSON_ENGINE_BASE
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-		float BaseTurnRate;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-		float BaseLookUpRate;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		USkeletalMeshComponent* SkeletalMesh;
-#pragma endregion //THIRDPERSON_ENGINE_BASE
-
 	UPROPERTY(BlueprintReadWrite, EditAnyWhere)
 	TSubclassOf<USkeletalMeshComponent> SkeletalMeshClass;
+	UPROPERTY(BlueprintReadWrite, EditAnyWhere)
+	float AttackRadius = 20.f;
+
+private:
+#pragma region THIRDPERSON_ENGINE_BASE
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> SkeletalMesh;
+#pragma endregion //THIRDPERSON_ENGINE_BASE
+	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCapsuleComponent> AttackCapsule;
+
+	UPROPERTY(Category = Status, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UMLStatusComponent> StatusComponent;
+
+	UPROPERTY(Category = Status, VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	FStatInfo DefaultStatusInfo;
+
+	FGuid GUID;
 };

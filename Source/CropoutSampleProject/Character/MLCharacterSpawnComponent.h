@@ -8,7 +8,7 @@
 
 
 class AMLCharacter;
-
+enum class EMLTeamType : uint8;
 UENUM(BlueprintType)
 enum class ESpawnType : uint8
 {
@@ -55,6 +55,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	ESpawnType SpawnerType = ESpawnType::Plus;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	EMLTeamType TeamType;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	int32 SpawnCharacterMax = 1;
 private:
