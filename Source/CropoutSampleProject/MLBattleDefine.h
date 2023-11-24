@@ -17,4 +17,6 @@ struct FStatInfo
 	GENERATED_BODY()
 	int32 HP = 0;
 	int32 Attack = 0;
+	int32 Defend = 0;
 };
+ 

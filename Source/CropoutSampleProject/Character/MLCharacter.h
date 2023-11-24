@@ -13,6 +13,16 @@ class UCameraComponent;
 class UMLStatusComponent;
 enum class EMLTeamType : uint8;
 
+UENUM(BlueprintType)
+enum class EMLCharacterState : uint8
+{
+	None,
+	Idle,
+	Walk,
+	Attack,
+	Damaged,
+};
+
 UCLASS()
 class CROPOUTSAMPLEPROJECT_API AMLCharacter : public ACharacter
 {
@@ -38,7 +48,10 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-private:
+
+	UFUNCTION(BlueprintCallable)
+	EMLCharacterState GetCharacterState() const { return CharacterState; };
+protected:
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 public:
@@ -47,7 +60,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnyWhere)
 	float AttackRadius = 20.f;
 
-private:
+protected:
 #pragma region THIRDPERSON_ENGINE_BASE
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> SkeletalMesh;
@@ -62,4 +75,7 @@ private:
 	FStatInfo DefaultStatusInfo;
 
 	FGuid GUID;
+
+	UPROPERTY(Category = State, VisibleAnywhere, BlueprintReadOnly)
+	EMLCharacterState CharacterState = EMLCharacterState::Idle;
 };

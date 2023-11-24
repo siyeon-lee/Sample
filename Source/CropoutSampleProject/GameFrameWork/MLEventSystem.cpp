@@ -4,6 +4,8 @@
 #include "Character/MLCharacter.h"
 UMLEventSystem::UMLEventSystem()
 {
+
+	OnAttackEvent.AddDynamic(this, &UMLEventSystem::OnAttack);
 }
 
 UMLEventSystem* UMLEventSystem::Get(const UWorld* World)
@@ -12,7 +14,6 @@ UMLEventSystem* UMLEventSystem::Get(const UWorld* World)
 	{
 		return UGameInstance::GetSubsystem<UMLEventSystem>(World->GetGameInstance());
 	}
-
 	return nullptr;
 }
 
