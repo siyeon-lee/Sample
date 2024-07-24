@@ -22,6 +22,7 @@ void AMLGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	GetWorld()->SpawnActor<AMLCharacter>(DefaultPawnClass, FTransform());
+
+//	GetWorld()->SpawnActor<AMLCharacter>(DefaultPawnClass, FTransform());
 	//PlayerCont
 }

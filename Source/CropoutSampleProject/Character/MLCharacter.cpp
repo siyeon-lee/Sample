@@ -11,7 +11,7 @@
 #include "Character/MLStatusComponent.h"
 #include "NavigationSystem.h"
 #include "MLBattleDefine.h"
-
+#include "GameFrameWork/MLEventSystem.h"
 
 // Sets default values
 AMLCharacter::AMLCharacter()
@@ -42,6 +42,8 @@ AMLCharacter::AMLCharacter()
 	{
 		AttackCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("AttackCapsule"));
 		AttackCapsule->SetCapsuleRadius(AttackRadius);
+		AttackCapsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		AttackCapsule->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 		AttackCapsule->OnComponentBeginOverlap.AddDynamic(this, &AMLCharacter::OnBeginOverlap);
 	}
 
@@ -109,11 +111,9 @@ void AMLCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void AMLCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// 피아식별 필요
-
-	if (IsValid(OtherActor) == true && OtherActor != GetOwner())
+	if (AMLCharacter* OtherCharacter = Cast<AMLCharacter>(OtherActor))
 	{
-		OtherActor->Destroy();
+		UMLEventSystem::Get(GetWorld())->OnAttackEvent.Broadcast(GetUID(), OtherCharacter->GetUID());
 	}
 }
 

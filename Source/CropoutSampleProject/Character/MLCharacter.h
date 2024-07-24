@@ -76,6 +76,6 @@ protected:
 
 	FGuid GUID;
 
-	UPROPERTY(Category = State, VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(Category = State, VisibleAnywhere, BlueprintReadWrite)
 	EMLCharacterState CharacterState = EMLCharacterState::Idle;
 };

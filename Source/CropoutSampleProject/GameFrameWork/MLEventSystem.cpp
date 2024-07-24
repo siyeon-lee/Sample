@@ -39,6 +39,7 @@ void UMLEventSystem::Deinitialize()
 
 void UMLEventSystem::OnAttack(FGuid InAttackerID, FGuid InDefenderID)
 {
+	UE_LOG(LogTemp, Error, TEXT("OnAttack."));
 	UMLCharacterPoolManager* CharacterPool = this->GetGameInstance()->GetSubsystem<UMLCharacterPoolManager>();
 	if (CharacterPool == nullptr)
 	{
