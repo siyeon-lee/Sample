@@ -57,7 +57,7 @@ void AMLCharacter::InitCharacter(FGuid InUID, EMLTeamType InTeamType)
 	GUID = InUID;
 	if (StatusComponent != nullptr)
 	{ 
-		StatusComponent->InitStatus(InTeamType, DefaultStatusInfo);
+		StatusComponent->InitStatus(InTeamType, StatusInfo);
 	}
 	//Init 완료하기 전에 Overlap 되어버려빔~
 	if (AttackCapsule)
@@ -68,16 +68,24 @@ void AMLCharacter::InitCharacter(FGuid InUID, EMLTeamType InTeamType)
 	}
 }
 
+void AMLCharacter::DoAttack()
+{
+	SetCharacterState(EMLCharacterState::Attack);
+	//To do : PlayMontage
+	//Attacker->PlayAnimMontage();
+
+}
+
 void AMLCharacter::BeAttacked(int32 InAttackValue)
 {
+	SetCharacterState(EMLCharacterState::Damaged);
 	if (StatusComponent != nullptr)
 	{
 		StatusComponent->OnAttacked(InAttackValue);
-		CharacterState = EMLCharacterState::Attack;
 	}
 	if (IsDead())
 	{
-		UMLEventSystem::Get(GetWorld())->OnDeadEvent.Broadcast(GetUID());
+		UMLEventSystem::Get(GetWorld())->DeadEvent.Broadcast(GetUID());
 	}
 
 }
@@ -148,17 +156,13 @@ void AMLCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 }
 
-void AMLCharacter::DoAttack()
-{
-	//Attacker->PlayAnimMontage();
-	
-}
+
 
 void AMLCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (AMLCharacter* OtherCharacter = Cast<AMLCharacter>(OtherActor))
 	{
-		UMLEventSystem::Get(GetWorld())->OnAttackEvent.Broadcast(GetUID(), OtherCharacter->GetUID());
+		UMLEventSystem::Get(GetWorld())->AttackEvent.Broadcast(GetUID(), OtherCharacter->GetUID());
 	}
 }
 

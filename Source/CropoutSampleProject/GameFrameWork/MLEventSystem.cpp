@@ -3,11 +3,13 @@
 #include "GameFrameWork/MLCharacterPoolManager.h"
 #include "Character/MLCharacter.h"
 #include "Character/MLSummoner.h"
+#include "GameFramework/PlayerController.h"
 
 UMLEventSystem::UMLEventSystem()
 {
-	OnAttackEvent.AddDynamic(this, &UMLEventSystem::OnAttack);
-	OnDeadEvent.AddDynamic(this, &UMLEventSystem::OnDead);
+	AttackEvent.AddDynamic(this, &UMLEventSystem::OnAttack);
+	DeadEvent.AddDynamic(this, &UMLEventSystem::OnDead);
+	SummonerDeadEvent.AddDynamic(this, &UMLEventSystem::OnEndGame);
 }
 
 UMLEventSystem* UMLEventSystem::Get(const UWorld* World)
@@ -42,34 +44,41 @@ void UMLEventSystem::Deinitialize()
 void UMLEventSystem::OnAttack(FGuid InAttackerID, FGuid InDefenderID)
 {
 	UE_LOG(LogTemp, Error, TEXT("OnAttack."));
+
 	if (UMLCharacterPoolManager* CharacterPool = GetGameInstance()->GetSubsystem<UMLCharacterPoolManager>())
 	{
 		if (InAttackerID.IsValid() == false || InDefenderID.IsValid() == false)
 		{
 			return;
 		}
+
 		TWeakObjectPtr<AMLCharacter> Attacker = CharacterPool->GetCharacterByUID(InAttackerID);
 		TWeakObjectPtr<AMLCharacter> Defender = CharacterPool->GetCharacterByUID(InDefenderID);
+		
 		if (Attacker.IsValid() == false || Defender.IsValid() == false)
 		{
 			return;
 		}
 
-		bool IsFriend = Attacker->GetTeamType() == Defender->GetTeamType();
-		if (IsFriend == true)
+		bool bIsFriend = Attacker->GetTeamType() == Defender->GetTeamType();
+		if (bIsFriend == true)
 		{
 			return;
 		}
+
 		//이건노티파이로 바꿔야지
-		Attacker->SetCharacterState(EMLCharacterState::Attack);
-		Defender->SetCharacterState(EMLCharacterState::Damaged);
-		Defender->BeAttacked(999);
+		int32 DamageMount = Attacker->GetCharacterStat().AttackPower - Defender->GetCharacterStat().DefensePower;
+	
+		Attacker->DoAttack();
+		Defender->BeAttacked(DamageMount);	//Attacker->대미지양으로 
 	}
 }
 
 void UMLEventSystem::OnDead(FGuid InDeadID)
 {
 	UE_LOG(LogTemp, Error, TEXT("OnDead."));
+
+
 	if (UMLCharacterPoolManager* CharacterPool = GetGameInstance()->GetSubsystem<UMLCharacterPoolManager>())
 	{
 		if (InDeadID.IsValid() == false)
@@ -83,8 +92,19 @@ void UMLEventSystem::OnDead(FGuid InDeadID)
 			DeadCharacter->OnDead();
 		}
 
-		if (DeadCharacter->IsA(AMLSummoner::StaticClass()))
-		{
-		}
 	}
+}
+
+void UMLEventSystem::OnEndGame(EMLTeamType InDeadSummerTeam)
+{
+
+	// ShowUI
+
+	// EndPlayGame
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		UKismetSystemLibrary::QuitGame(this, PC, EQuitPreference::Quit, false);
+	}
+
+
 }

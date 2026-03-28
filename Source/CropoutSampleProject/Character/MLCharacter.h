@@ -34,6 +34,7 @@ public:
 	// Sets default values for this Character's properties
 	AMLCharacter();
 	virtual void InitCharacter(FGuid InUID, EMLTeamType InTeamType);
+	virtual void DoAttack();
 	virtual void BeAttacked(int32 InAttackValue);
 	virtual void OnDead();
 	bool IsDead() const;
@@ -56,9 +57,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	EMLCharacterState GetCharacterState() const { return CharacterState; };
 	void SetCharacterState(EMLCharacterState InState) { CharacterState = InState; };
+	const FStatInfo& GetCharacterStat() const { return StatusInfo; };
 
-public:
-	void DoAttack();
+
 protected:
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -67,8 +68,14 @@ public:
 	TSubclassOf<USkeletalMeshComponent> SkeletalMeshClass;
 	UPROPERTY(BlueprintReadWrite, EditAnyWhere)
 	float AttackRadius = 20.f;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = State)
+	float AttackStateDuration = 0.3f;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = State)
+	float DamagedStateDuration = 0.2f;
 
 protected:
+	void ReserveStateReset(float InDelay);
+
 #pragma region THIRDPERSON_ENGINE_BASE
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> SkeletalMesh;
@@ -80,10 +87,12 @@ protected:
 	TObjectPtr<UMLStatusComponent> StatusComponent;
 
 	UPROPERTY(Category = Status, VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	FStatInfo DefaultStatusInfo;
+	FStatInfo StatusInfo;
 
 	FGuid GUID;
 
 	UPROPERTY(Category = State, VisibleAnywhere, BlueprintReadWrite)
 	EMLCharacterState CharacterState = EMLCharacterState::Idle;
+
+	FTimerHandle StateResetTimerHandle;
 };

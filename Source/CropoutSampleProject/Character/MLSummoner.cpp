@@ -3,6 +3,8 @@
 
 #include "MLSummoner.h"
 #include "Character/MLCharacterSpawnComponent.h"
+#include "GameFrameWork/MLEventSystem.h"
+
 AMLSummoner::AMLSummoner()
 {
 	if (SpawnerComponent == nullptr)
@@ -15,4 +17,6 @@ AMLSummoner::AMLSummoner()
 void AMLSummoner::OnDead()
 {
 	Super::OnDead();
+
+	UMLEventSystem::Get(GetWorld())->SummonerDeadEvent.Broadcast(GetTeamType());
 }
