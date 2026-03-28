@@ -20,8 +20,9 @@ public:
 	UMLStatusComponent();
 public:
 	void InitStatus(EMLTeamType InTeamType, FStatInfo InInfo);
-	virtual void OnDead();
+	virtual void OnAttacked(int32 InDamage);
 
+	const FStatInfo& GetStatInfo() const;
 	EMLTeamType GetTeamType() const { return TeamType; }
 private:
 	EMLTeamType TeamType;

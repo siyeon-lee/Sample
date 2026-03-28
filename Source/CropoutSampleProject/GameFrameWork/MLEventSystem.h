@@ -9,6 +9,8 @@
 class UMLCharacterManagerPool;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAttackEvent, FGuid, AttackerID, FGuid, DefenderID);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDeadEvent, FGuid, DeadUID);
+
 
 UCLASS()
 class CROPOUTSAMPLEPROJECT_API UMLEventSystem : public UGameInstanceSubsystem
@@ -17,12 +19,15 @@ class CROPOUTSAMPLEPROJECT_API UMLEventSystem : public UGameInstanceSubsystem
 public:
 	UMLEventSystem();
 	FAttackEvent OnAttackEvent;
+	FDeadEvent OnDeadEvent;
 public:
 	static UMLEventSystem* Get(const UWorld* WorldObject);
 	static UMLEventSystem* GetEventSystem(const UObject* WorldObject);
 private:
 	UFUNCTION()
 	void OnAttack(FGuid InAttackerID, FGuid InDefenderID);
+	UFUNCTION()
+	void OnDead(FGuid InDeadID);
 private:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;

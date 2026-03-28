@@ -41,13 +41,11 @@ AMLCharacter::AMLCharacter()
 	if (AttackCapsule == nullptr)
 	{
 		AttackCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("AttackCapsule"));
+		AttackCapsule->SetupAttachment(GetCapsuleComponent());
 		AttackCapsule->SetCapsuleRadius(AttackRadius);
-		AttackCapsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		AttackCapsule->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
-		AttackCapsule->OnComponentBeginOverlap.AddDynamic(this, &AMLCharacter::OnBeginOverlap);
 	}
 
-	if (StatusComponent != nullptr)
+	if (StatusComponent == nullptr)
 	{
 		StatusComponent = CreateDefaultSubobject<UMLStatusComponent>(TEXT("StatusComponent"));
 
@@ -61,24 +59,65 @@ void AMLCharacter::InitCharacter(FGuid InUID, EMLTeamType InTeamType)
 	{ 
 		StatusComponent->InitStatus(InTeamType, DefaultStatusInfo);
 	}
+	//Init 완료하기 전에 Overlap 되어버려빔~
+	if (AttackCapsule)
+	{
+		//AttackCapsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		//AttackCapsule->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
+		AttackCapsule->OnComponentBeginOverlap.AddDynamic(this, &AMLCharacter::OnBeginOverlap);
+	}
 }
 
 void AMLCharacter::BeAttacked(int32 InAttackValue)
 {
 	if (StatusComponent != nullptr)
 	{
-		StatusComponent->OnDead();
+		StatusComponent->OnAttacked(InAttackValue);
+		CharacterState = EMLCharacterState::Attack;
 	}
+	if (IsDead())
+	{
+		UMLEventSystem::Get(GetWorld())->OnDeadEvent.Broadcast(GetUID());
+	}
+
+}
+
+void AMLCharacter::OnDead()
+{
+	CharacterState = EMLCharacterState::Dead;
 	// 죽는 모션
-	// 3초 뒤 Destroy;
-	Destroy();
+	// 3초 뒤 Destroy;\
+
+	FTimerHandle TimerHandle;
+	FTimerDelegate TimerCallback;
+	TimerCallback.BindLambda(
+		[this]
+		{
+			if (this && GetWorld())
+			{
+				Destroy();
+			}
+		});
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerCallback, 1.0f, false);
+	
+
+}
+
+bool AMLCharacter::IsDead() const
+{
+	if (StatusComponent != nullptr)
+	{
+		return StatusComponent->GetStatInfo().HP <= 0;
+	}
+	return true;
 }
 
 EMLTeamType AMLCharacter::GetTeamType() const
 {
+	//테스트 임시
 	if (StatusComponent == nullptr)
 	{
-		return EMLTeamType::None;
+		return EMLTeamType::Player;
 	}
 	return StatusComponent->GetTeamType();
 }
@@ -107,6 +146,12 @@ void AMLCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void AMLCharacter::DoAttack()
+{
+	//Attacker->PlayAnimMontage();
+	
 }
 
 void AMLCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

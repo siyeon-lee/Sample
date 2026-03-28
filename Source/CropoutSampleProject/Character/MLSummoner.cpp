@@ -11,3 +11,8 @@ AMLSummoner::AMLSummoner()
 	}
 
 }
+
+void AMLSummoner::OnDead()
+{
+	Super::OnDead();
+}

@@ -159,11 +159,16 @@
 		{
 			"Name": "GeometryScripting",
 			"Enabled": true
+		},
+		{
+			"Name": "Text3D",
+			"Enabled": true
 		}
 	],
 	"TargetPlatforms": [
 		"Android",
-		"Windows"
+		"Windows",
+		"HoloLens"
 	],
 	"EpicSampleNameHash": "2679385369"
 }

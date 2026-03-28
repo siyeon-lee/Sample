@@ -13,6 +13,7 @@ class UCameraComponent;
 class UMLStatusComponent;
 enum class EMLTeamType : uint8;
 
+
 UENUM(BlueprintType)
 enum class EMLCharacterState : uint8
 {
@@ -21,6 +22,7 @@ enum class EMLCharacterState : uint8
 	Walk,
 	Attack,
 	Damaged,
+	Dead,
 };
 
 UCLASS()
@@ -33,6 +35,8 @@ public:
 	AMLCharacter();
 	virtual void InitCharacter(FGuid InUID, EMLTeamType InTeamType);
 	virtual void BeAttacked(int32 InAttackValue);
+	virtual void OnDead();
+	bool IsDead() const;
 public:
 	EMLTeamType GetTeamType() const;
 	FGuid GetUID() const { return GUID; }
@@ -51,6 +55,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	EMLCharacterState GetCharacterState() const { return CharacterState; };
+	void SetCharacterState(EMLCharacterState InState) { CharacterState = InState; };
+
+public:
+	void DoAttack();
 protected:
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

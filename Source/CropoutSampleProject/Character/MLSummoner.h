@@ -6,6 +6,7 @@
 #include "Character/MLCharacter.h"
 #include "MLSummoner.generated.h"
 
+enum class EMLTeamType : uint8;
 /**
  * 
  */
@@ -16,7 +17,13 @@ class CROPOUTSAMPLEPROJECT_API AMLSummoner : public AMLCharacter
 public:
 	AMLSummoner();
 
+public:
+	virtual void OnDead() override;
+
 protected:
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UMLCharacterSpawnComponent* SpawnerComponent;
+
+
+	enum class EMLTeamType TeamType = EMLTeamType::Player;
 };

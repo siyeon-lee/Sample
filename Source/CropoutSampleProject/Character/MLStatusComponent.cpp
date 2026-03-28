@@ -11,8 +11,14 @@ void UMLStatusComponent::InitStatus(EMLTeamType InTeamType, FStatInfo InInfo)
 	StatusInfo = InInfo;
 }
 
-void UMLStatusComponent::OnDead()
+void UMLStatusComponent::OnAttacked(int32 InDamage)
 {
 	IsDead = true;
-	StatusInfo.HP = 0;
+	StatusInfo.HP -= InDamage;
+}
+
+const FStatInfo& UMLStatusComponent::GetStatInfo() const
+{
+	// TODO: 여기에 return 문을 삽입합니다.
+	return StatusInfo;
 }

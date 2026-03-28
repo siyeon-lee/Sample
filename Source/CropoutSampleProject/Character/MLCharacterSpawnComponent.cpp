@@ -13,7 +13,7 @@ UMLCharacterSpawnComponent::UMLCharacterSpawnComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-	TeamType = EMLTeamType::Player;
+
 	// ...
 }
 
@@ -26,8 +26,6 @@ void UMLCharacterSpawnComponent::BeginPlay()
 	// ...
 	
 }
-
-
 // Called every frame
 void UMLCharacterSpawnComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -62,29 +60,37 @@ void UMLCharacterSpawnComponent::SpawnCharacter()
 		{
 			FActorSpawnParameters SpawnParameters;
 			SpawnParameters.Owner = this->GetOwner();
-			PoolManager->SpawnCharacter<AMLCharacter>(TeamType, SpawnCharacterList[SpawnCharacterIndex], GetSpawnTransform());
+			if (AMLCharacter* Owner = Cast< AMLCharacter>(GetOwner()))
+			{
+				PoolManager->SpawnCharacter<AMLCharacter>(Owner->GetTeamType(), SpawnCharacterList[SpawnCharacterIndex], GetSpawnTransform(), SpawnParameters);
+			}
 		}
 	}
 }
 
 FTransform UMLCharacterSpawnComponent::GetSpawnTransform()
 {
-	APlayerController* PlayerContorller = UGameplayStatics::GetPlayerController(this, 0);
-	if (PlayerContorller == nullptr)
+	//APlayerController* PlayerContorller = UGameplayStatics::GetPlayerController(this, 0);
+	//if (PlayerContorller != nullptr)
+	//{
+	//	return FTransform();
+	//}
+	if (AActor* OwnerActor = GetOwner())
 	{
-		return FTransform();
+		FVector BaseVector  = GetOwner()->GetActorLocation();
+		FVector RandomUnitVector = FMath::VRand();
+		float RandomDistance = FMath::FRandRange(SpawnMinRadius, SpawnMaxRadius);
+		//플레이어 뒤로 스폰되지 않도록.
+		FVector SpawnStartOffset = GetOwner()->GetActorForwardVector() * SpawnMaxRadius * 2;
+		FVector  ResultVector = BaseVector + SpawnStartOffset + RandomDistance * RandomUnitVector;
+		ResultVector.Z = BaseVector.Z;
+		//FRotator ResultRotator = PlayerContorller->GetControlRotation();//GetOwner()->GetActorRotation();
+		//ResultRotator.Roll = 0.f;
+		//ResultRotator.Pitch = 0.f;
+		//ResultRotator.Yaw -= 90.f;
+		return FTransform(GetOwner()->GetActorRotation(), ResultVector);
+	
 	}
-	FVector BaseVector  = GetOwner()->GetActorLocation();
-	FVector RandomUnitVector = FMath::VRand();
-	float RandomDistance = FMath::FRandRange(SpawnMinRadius, SpawnMaxRadius);
-	//플레이어 뒤로 스폰되지 않도록.
-	FVector SpawnStartOffset = GetOwner()->GetActorForwardVector() * SpawnMaxRadius * 2;
-	FVector  ResultVector = BaseVector + SpawnStartOffset + RandomDistance * RandomUnitVector;
-	ResultVector.Z = BaseVector.Z;
-	//FRotator ResultRotator = PlayerContorller->GetControlRotation();//GetOwner()->GetActorRotation();
-	//ResultRotator.Roll = 0.f;
-	//ResultRotator.Pitch = 0.f;
-	//ResultRotator.Yaw -= 90.f;
-	return FTransform(FRotator::ZeroRotator, ResultVector);
+	return FTransform();
 }
 

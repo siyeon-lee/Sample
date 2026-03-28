@@ -2,10 +2,12 @@
 #include "MLEventSystem.h"
 #include "GameFrameWork/MLCharacterPoolManager.h"
 #include "Character/MLCharacter.h"
+#include "Character/MLSummoner.h"
+
 UMLEventSystem::UMLEventSystem()
 {
-
 	OnAttackEvent.AddDynamic(this, &UMLEventSystem::OnAttack);
+	OnDeadEvent.AddDynamic(this, &UMLEventSystem::OnDead);
 }
 
 UMLEventSystem* UMLEventSystem::Get(const UWorld* World)
@@ -40,24 +42,49 @@ void UMLEventSystem::Deinitialize()
 void UMLEventSystem::OnAttack(FGuid InAttackerID, FGuid InDefenderID)
 {
 	UE_LOG(LogTemp, Error, TEXT("OnAttack."));
-	UMLCharacterPoolManager* CharacterPool = this->GetGameInstance()->GetSubsystem<UMLCharacterPoolManager>();
-	if (CharacterPool == nullptr)
+	if (UMLCharacterPoolManager* CharacterPool = GetGameInstance()->GetSubsystem<UMLCharacterPoolManager>())
 	{
-		return;
-	}
+		if (InAttackerID.IsValid() == false || InDefenderID.IsValid() == false)
+		{
+			return;
+		}
+		TWeakObjectPtr<AMLCharacter> Attacker = CharacterPool->GetCharacterByUID(InAttackerID);
+		TWeakObjectPtr<AMLCharacter> Defender = CharacterPool->GetCharacterByUID(InDefenderID);
+		if (Attacker.IsValid() == false || Defender.IsValid() == false)
+		{
+			return;
+		}
 
-	TWeakObjectPtr<AMLCharacter> Attacker = CharacterPool->GetCharacterByUID(InAttackerID);
-	TWeakObjectPtr<AMLCharacter> Defender = CharacterPool->GetCharacterByUID(InDefenderID);
-	if (Attacker.IsValid() == false || Defender.IsValid() == false)
+		bool IsFriend = Attacker->GetTeamType() == Defender->GetTeamType();
+		if (IsFriend == true)
+		{
+			return;
+		}
+		//이건노티파이로 바꿔야지
+		Attacker->SetCharacterState(EMLCharacterState::Attack);
+		Defender->SetCharacterState(EMLCharacterState::Damaged);
+		Defender->BeAttacked(999);
+	}
+}
+
+void UMLEventSystem::OnDead(FGuid InDeadID)
+{
+	UE_LOG(LogTemp, Error, TEXT("OnDead."));
+	if (UMLCharacterPoolManager* CharacterPool = GetGameInstance()->GetSubsystem<UMLCharacterPoolManager>())
 	{
-		return;
-	}
+		if (InDeadID.IsValid() == false)
+		{
+			return;
+		}
 
-	bool IsFriend = Attacker->GetTeamType() == Defender->GetTeamType();
-	if (IsFriend == true)
-	{
-		return;
-	}
+		TWeakObjectPtr<AMLCharacter> DeadCharacter = CharacterPool->GetCharacterByUID(InDeadID);
+		if (DeadCharacter.IsValid())
+		{
+			DeadCharacter->OnDead();
+		}
 
-	Defender->BeAttacked(999);
+		if (DeadCharacter->IsA(AMLSummoner::StaticClass()))
+		{
+		}
+	}
 }
