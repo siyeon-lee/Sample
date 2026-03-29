@@ -56,8 +56,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	EMLCharacterState GetCharacterState() const { return CharacterState; };
-	void SetCharacterState(EMLCharacterState InState) { CharacterState = InState; };
-	const FStatInfo& GetCharacterStat() const { return StatusInfo; };
+	void SetCharacterState(EMLCharacterState InState);
+
+	UFUNCTION(BlueprintCallable)
+	const FStatInfo& GetStatInfo() const;
 
 
 protected:
@@ -75,6 +77,7 @@ public:
 
 protected:
 	void ReserveStateReset(float InDelay);
+	void ResetStateToIdle();
 
 #pragma region THIRDPERSON_ENGINE_BASE
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -86,8 +89,9 @@ protected:
 	UPROPERTY(Category = Status, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UMLStatusComponent> StatusComponent;
 
-	UPROPERTY(Category = Status, VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	FStatInfo StatusInfo;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FStatInfo DefaultStatInfo;
+
 
 	FGuid GUID;
 
@@ -95,4 +99,6 @@ protected:
 	EMLCharacterState CharacterState = EMLCharacterState::Idle;
 
 	FTimerHandle StateResetTimerHandle;
+
+
 };

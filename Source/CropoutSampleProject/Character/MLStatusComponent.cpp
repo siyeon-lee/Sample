@@ -17,13 +17,14 @@ void UMLStatusComponent::OnAttacked(int32 InDamage)
 	{
 		return;
 	}
-	IsDead = true;
+
 	StatusInfo.HP -= InDamage;
 	StatusInfo.HP = FMath::Max(0, StatusInfo.HP);
+	IsDead = StatusInfo.HP <= 0;
 }
 
 const FStatInfo& UMLStatusComponent::GetStatInfo() const
 {
-	// TODO: ¿©±â¿¡ return ¹®À» »ðÀÔÇÕ´Ï´Ù.
+	// TODO: ì—¬ê¸°ì— return ë¬¸ì„ ì‚½ìž…í•©ë‹ˆë‹¤.
 	return StatusInfo;
 }

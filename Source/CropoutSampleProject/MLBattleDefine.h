@@ -15,8 +15,13 @@ USTRUCT(BlueprintType)
 struct FStatInfo
 {
 	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 HP = 0;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 AttackPower = 0;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 DefensePower = 0;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 Speed = 0;
 };
  

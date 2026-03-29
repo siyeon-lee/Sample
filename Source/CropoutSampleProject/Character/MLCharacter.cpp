@@ -57,9 +57,9 @@ void AMLCharacter::InitCharacter(FGuid InUID, EMLTeamType InTeamType)
 	GUID = InUID;
 	if (StatusComponent != nullptr)
 	{ 
-		StatusComponent->InitStatus(InTeamType, StatusInfo);
+		StatusComponent->InitStatus(InTeamType, DefaultStatInfo);
 	}
-	//Init ¿Ï·áÇÏ±â Àü¿¡ Overlap µÇ¾î¹ö·Áºö~
+	//Init ì™„ë£Œí•˜ê¸° ì „ì— Overlap ë˜ì–´ë²„ë ¤ë¹”~
 	if (AttackCapsule)
 	{
 		//AttackCapsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -70,19 +70,31 @@ void AMLCharacter::InitCharacter(FGuid InUID, EMLTeamType InTeamType)
 
 void AMLCharacter::DoAttack()
 {
+	if (GetCharacterState() == EMLCharacterState::Dead)
+	{
+		return;
+	}
+
 	SetCharacterState(EMLCharacterState::Attack);
+	ReserveStateReset(AttackStateDuration);
 	//To do : PlayMontage
 	//Attacker->PlayAnimMontage();
-
 }
 
 void AMLCharacter::BeAttacked(int32 InAttackValue)
 {
+	if (GetCharacterState() == EMLCharacterState::Dead)
+	{
+		return;
+	}
+
 	SetCharacterState(EMLCharacterState::Damaged);
+	ReserveStateReset(DamagedStateDuration);
 	if (StatusComponent != nullptr)
 	{
 		StatusComponent->OnAttacked(InAttackValue);
 	}
+
 	if (IsDead())
 	{
 		UMLEventSystem::Get(GetWorld())->DeadEvent.Broadcast(GetUID());
@@ -92,9 +104,26 @@ void AMLCharacter::BeAttacked(int32 InAttackValue)
 
 void AMLCharacter::OnDead()
 {
-	CharacterState = EMLCharacterState::Dead;
-	// Á×´Â ¸ğ¼Ç
-	// 3ÃÊ µÚ Destroy;\
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(StateResetTimerHandle);
+	}
+
+	SetCharacterState(EMLCharacterState::Dead);
+
+	GetCharacterMovement()->DisableMovement();
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	if (MeshComp)
+	{
+		MeshComp->SetCollisionProfileName(TEXT("Ragdoll"));
+		MeshComp->SetAllBodiesSimulatePhysics(true);
+		MeshComp->WakeAllRigidBodies();
+		MeshComp->bBlendPhysics = true;
+	}
+	// ì£½ëŠ” ëª¨ì…˜
+	// 3ì´ˆ ë’¤ Destroy;\
 
 	FTimerHandle TimerHandle;
 	FTimerDelegate TimerCallback;
@@ -122,7 +151,7 @@ bool AMLCharacter::IsDead() const
 
 EMLTeamType AMLCharacter::GetTeamType() const
 {
-	//Å×½ºÆ® ÀÓ½Ã
+	//í…ŒìŠ¤íŠ¸ ì„ì‹œ
 	if (StatusComponent == nullptr)
 	{
 		return EMLTeamType::Player;
@@ -156,12 +185,66 @@ void AMLCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 }
 
+void AMLCharacter::SetCharacterState(EMLCharacterState InState)
+{
+	if (CharacterState == EMLCharacterState::Dead && InState != EMLCharacterState::Dead)
+	{
+		return;
+	}
+
+	CharacterState = InState;
+}
+
+const FStatInfo& AMLCharacter::GetStatInfo() const
+{
+	// TODO: ì—¬ê¸°ì— return ë¬¸ì„ ì‚½ì…í•©ë‹ˆë‹¤.
+	return StatusComponent->GetStatInfo();
+}
+
+void AMLCharacter::ReserveStateReset(float InDelay)
+{
+	if (GetWorld() == nullptr || GetCharacterState() == EMLCharacterState::Dead)
+	{
+		return;
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(StateResetTimerHandle);
+
+	if (InDelay <= 0.f)
+	{
+		ResetStateToIdle();
+		return;
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(StateResetTimerHandle, this, &AMLCharacter::ResetStateToIdle, InDelay, false);
+}
+
+void AMLCharacter::ResetStateToIdle()
+{
+	if (GetCharacterState() == EMLCharacterState::Dead)
+	{
+		return;
+	}
+
+	SetCharacterState(EMLCharacterState::Idle);
+}
+
 
 
 void AMLCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (GetCharacterState() == EMLCharacterState::Dead)
+	{
+		return;
+	}
+
 	if (AMLCharacter* OtherCharacter = Cast<AMLCharacter>(OtherActor))
 	{
+		if (OtherCharacter == this || OtherCharacter->GetCharacterState() == EMLCharacterState::Dead)
+		{
+			return;
+		}
+
 		UMLEventSystem::Get(GetWorld())->AttackEvent.Broadcast(GetUID(), OtherCharacter->GetUID());
 	}
 }
@@ -173,12 +256,12 @@ bool AMLCharacter::MoveToLovcation(const FVector& InDestination)
 	{
 		//FPathFindingQuery Query(this);
 		//Query.SetGoalLocation(Destination);
-		//Query.SetAllowPartialPaths(true); // ºÎºĞ °æ·Î Çã¿ë ¿©ºÎ ¼³Á¤
+		//Query.SetAllowPartialPaths(true); // ë¶€ë¶„ ê²½ë¡œ í—ˆìš© ì—¬ë¶€ ì„¤ì •
 
 		//FNavPathSharedPtr NavPath;
 		//if (NavSystem->FindPathSync(Query, NavPath))
 		//{
-		//	GetController()->MoveAlongPath(NavPath, false); // °æ·Î µû¶ó ÀÌµ¿ ¸í·É
+		//	GetController()->MoveAlongPath(NavPath, false); // ê²½ë¡œ ë”°ë¼ ì´ë™ ëª…ë ¹
 		//}
 	}
 	return false;

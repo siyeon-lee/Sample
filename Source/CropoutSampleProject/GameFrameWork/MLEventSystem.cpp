@@ -60,17 +60,22 @@ void UMLEventSystem::OnAttack(FGuid InAttackerID, FGuid InDefenderID)
 			return;
 		}
 
+		if (Attacker->IsDead() || Defender->IsDead())
+		{
+			return;
+		}
+
 		bool bIsFriend = Attacker->GetTeamType() == Defender->GetTeamType();
 		if (bIsFriend == true)
 		{
 			return;
 		}
 
-		//ÀÌ°Ç³ëÆ¼ÆÄÀÌ·Î ¹Ù²ã¾ßÁö
-		int32 DamageMount = Attacker->GetCharacterStat().AttackPower - Defender->GetCharacterStat().DefensePower;
+		//ì´ê±´ë…¸í‹°íŒŒì´ë¡œ ë°”ê¿”ì•¼ì§€
+		const int32 DamageMount = FMath::Max(0, Attacker->GetStatInfo().AttackPower - Defender->GetStatInfo().DefensePower);
 	
 		Attacker->DoAttack();
-		Defender->BeAttacked(DamageMount);	//Attacker->´ë¹ÌÁö¾çÀ¸·Î 
+		Defender->BeAttacked(DamageMount);	//Attacker->ëŒ€ë¯¸ì§€ì–‘ìœ¼ë¡œ 
 	}
 }
 
@@ -97,7 +102,6 @@ void UMLEventSystem::OnDead(FGuid InDeadID)
 
 void UMLEventSystem::OnEndGame(EMLTeamType InDeadSummerTeam)
 {
-
 	// ShowUI
 
 	// EndPlayGame
@@ -105,6 +109,4 @@ void UMLEventSystem::OnEndGame(EMLTeamType InDeadSummerTeam)
 	{
 		UKismetSystemLibrary::QuitGame(this, PC, EQuitPreference::Quit, false);
 	}
-
-
 }
